@@ -18,6 +18,8 @@ from itertools import product,permutations
 from scipy.io import loadmat
 from scipy.sparse import issparse
 
+from tqdm import tqdm
+
 logger = logging.getLogger("deepwalk")
 
 
@@ -193,6 +195,39 @@ def parse_adjacencylist_unchecked(f):
       adjlist.extend([[int(x) for x in l.strip().split()]])
 
   return adjlist
+
+
+def load_weighted_edgelist(input_fname):
+    """Create a graph based on a list of weighted edges with the format:
+
+    source_id \t target_id \t edge_weight \n
+
+    Assumes that the graph is directed.
+    """
+
+    adjlist = defaultdict(list)
+
+    with open(input_fname, "r") as fin:
+        for line in tqdm(fin, desc="Reading weighted edgelist"):
+            source_id, target_id, edge_weight = line.rstrip("\n").split("\t")
+
+            source_id = int(source_id)
+            target_id = int(target_id)
+            edge_weight = float(edge_weight)
+
+            adjlist[source_id].append((target_id, edge_weight))
+
+    # original graph object structure:
+    # defaultdict(list): G[node_id] = [node_id, ...]
+    # new weighted graph structure:
+    # defaultdict(list): G[node_id] = [ [node_id, ...], [weight, ...] ]
+
+    G = Graph()
+    for source_id, edges in adjlist.items():
+        G[source_id] = list(zip(*edges))
+
+    return G
+
 
 def load_adjacencylist(file_, undirected=False, chunksize=10000, unchecked=True):
 
