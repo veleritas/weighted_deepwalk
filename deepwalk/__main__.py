@@ -48,54 +48,65 @@ def debug(type_, value, tb):
 
 def process(args):
 
-  if args.format == "adjlist":
-    G = graph.load_adjacencylist(args.input, undirected=args.undirected)
-  elif args.format == "edgelist":
-    G = graph.load_edgelist(args.input, undirected=args.undirected)
-  elif args.format == "mat":
-    G = graph.load_matfile(args.input, variable_name=args.matfile_variable_name, undirected=args.undirected)
-  else:
-    raise Exception("Unknown file format: '%s'.  Valid formats: 'adjlist', 'edgelist', 'mat'" % args.format)
-
-  print("Number of nodes: {}".format(len(G.nodes())))
-
-  num_walks = len(G.nodes()) * args.number_walks
-
-  print("Number of walks: {}".format(num_walks))
-
-  data_size = num_walks * args.walk_length
-
-  print("Data size (walks*length): {}".format(data_size))
-
-  if data_size < args.max_memory_data_size:
-    print("Walking...")
-    walks = graph.build_deepwalk_corpus(G, num_paths=args.number_walks,
-                                        path_length=args.walk_length, alpha=0, rand=random.Random(args.seed))
-    print("Training...")
-    model = Word2Vec(walks, size=args.representation_size, window=args.window_size, min_count=0, sg=1, hs=1, workers=args.workers)
-  else:
-    print("Data size {} is larger than limit (max-memory-data-size: {}).  Dumping walks to disk.".format(data_size, args.max_memory_data_size))
-    print("Walking...")
-
-    walks_filebase = args.output + ".walks"
-    walk_files = serialized_walks.write_walks_to_disk(G, walks_filebase, num_paths=args.number_walks,
-                                         path_length=args.walk_length, alpha=0, rand=random.Random(args.seed),
-                                         num_workers=args.workers)
-
-    print("Counting vertex frequency...")
-    if not args.vertex_freq_degree:
-      vertex_counts = serialized_walks.count_textfiles(walk_files, args.workers)
+    if args.format == "adjlist":
+        G = graph.load_adjacencylist(args.input, undirected=args.undirected)
+    elif args.format == "edgelist":
+        G = graph.load_edgelist(args.input, undirected=args.undirected)
+    elif args.format == "mat":
+        G = graph.load_matfile(args.input, variable_name=args.matfile_variable_name, undirected=args.undirected)
     else:
-      # use degree distribution for frequency in tree
-      vertex_counts = G.degree(nodes=G.iterkeys())
+        raise Exception("Unknown file format: '%s'.  Valid formats: 'adjlist', 'edgelist', 'mat'" % args.format)
 
-    print("Training...")
-    walks_corpus = serialized_walks.WalksCorpus(walk_files)
-    model = Skipgram(sentences=walks_corpus, vocabulary_counts=vertex_counts,
-                     size=args.representation_size,
-                     window=args.window_size, min_count=0, trim_rule=None, workers=args.workers)
 
-  model.wv.save_word2vec_format(args.output)
+    print("Number of nodes: {}".format(len(G.nodes())))
+
+    num_walks = len(G.nodes()) * args.number_walks
+    print("Number of walks: {}".format(num_walks))
+
+    data_size = num_walks * args.walk_length
+    print("Data size (walks*length): {}".format(data_size))
+
+
+    if data_size < args.max_memory_data_size:
+        print("Walking...")
+        walks = graph.build_deepwalk_corpus(
+            G, num_paths=args.number_walks,
+            path_length=args.walk_length, alpha=0, rand=random.Random(args.seed)
+        )
+
+        print("Training...")
+        model = Word2Vec(
+            walks, size=args.representation_size, window=args.window_size,
+            min_count=0, sg=1, hs=1, workers=args.workers
+        )
+    else:
+        print("Data size {} is larger than limit (max-memory-data-size: {}).  Dumping walks to disk.".format(data_size, args.max_memory_data_size))
+        print("Walking...")
+
+        walks_filebase = args.output + ".walks"
+        walk_files = serialized_walks.write_walks_to_disk(
+            G, walks_filebase, num_paths=args.number_walks,
+            path_length=args.walk_length, alpha=0, rand=random.Random(args.seed),
+            num_workers=args.workers
+        )
+
+        print("Counting vertex frequency...")
+        if not args.vertex_freq_degree:
+            vertex_counts = serialized_walks.count_textfiles(walk_files, args.workers)
+        else:
+            # use degree distribution for frequency in tree
+            vertex_counts = G.degree(nodes=G.iterkeys())
+
+        print("Training...")
+        walks_corpus = serialized_walks.WalksCorpus(walk_files)
+
+        model = Skipgram(sentences=walks_corpus, vocabulary_counts=vertex_counts,
+            size=args.representation_size,
+            window=args.window_size, min_count=0, trim_rule=None, workers=args.workers
+        )
+
+
+    model.wv.save_word2vec_format(args.output)
 
 
 def main():
