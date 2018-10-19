@@ -99,67 +99,73 @@ def process(args):
 
 
 def main():
-  parser = ArgumentParser("deepwalk",
-                          formatter_class=ArgumentDefaultsHelpFormatter,
-                          conflict_handler='resolve')
+    parser = ArgumentParser("deepwalk",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+        conflict_handler='resolve'
+    )
 
-  parser.add_argument("--debug", dest="debug", action='store_true', default=False,
-                      help="drop a debugger if an exception is raised.")
+    parser.add_argument("--debug", dest="debug", action='store_true',
+        default=False, help="drop a debugger if an exception is raised."
+    )
 
-  parser.add_argument('--format', default='adjlist',
-                      help='File format of input file')
+    parser.add_argument('--format', default='adjlist',
+        help='File format of input file'
+    )
 
-  parser.add_argument('--input', nargs='?', required=True,
-                      help='Input graph file')
+    parser.add_argument('--input', nargs='?', required=True,
+        help='Input graph file'
+    )
 
-  parser.add_argument("-l", "--log", dest="log", default="INFO",
-                      help="log verbosity level")
+    parser.add_argument("-l", "--log", dest="log", default="INFO",
+        help="log verbosity level")
 
-  parser.add_argument('--matfile-variable-name', default='network',
-                      help='variable name of adjacency matrix inside a .mat file.')
+    parser.add_argument('--matfile-variable-name', default='network',
+        help='variable name of adjacency matrix inside a .mat file.')
 
-  parser.add_argument('--max-memory-data-size', default=1000000000, type=int,
-                      help='Size to start dumping walks to disk, instead of keeping them in memory.')
+    parser.add_argument('--max-memory-data-size', default=1000000000, type=int,
+        help='Size to start dumping walks to disk, instead of keeping them in memory.')
 
-  parser.add_argument('--number-walks', default=10, type=int,
-                      help='Number of random walks to start at each node')
+    parser.add_argument('--number-walks', default=10, type=int,
+        help='Number of random walks to start at each node')
 
-  parser.add_argument('--output', required=True,
-                      help='Output representation file')
+    parser.add_argument('--output', required=True,
+        help='Output representation file')
 
-  parser.add_argument('--representation-size', default=64, type=int,
-                      help='Number of latent dimensions to learn for each node.')
+    parser.add_argument('--representation-size', default=64, type=int,
+        help='Number of latent dimensions to learn for each node.')
 
-  parser.add_argument('--seed', default=0, type=int,
-                      help='Seed for random walk generator.')
+    parser.add_argument('--seed', default=0, type=int,
+        help='Seed for random walk generator.')
 
-  parser.add_argument('--undirected', default=True, type=bool,
-                      help='Treat graph as undirected.')
+    parser.add_argument('--undirected', default=True, type=bool,
+        help='Treat graph as undirected.')
 
-  parser.add_argument('--vertex-freq-degree', default=False, action='store_true',
+    parser.add_argument('--vertex-freq-degree', default=False, action='store_true',
                       help='Use vertex degree to estimate the frequency of nodes '
                            'in the random walks. This option is faster than '
                            'calculating the vocabulary.')
 
-  parser.add_argument('--walk-length', default=40, type=int,
+    parser.add_argument('--walk-length', default=40, type=int,
                       help='Length of the random walk started at each node')
 
-  parser.add_argument('--window-size', default=5, type=int,
-                      help='Window size of skipgram model.')
+    parser.add_argument('--window-size', default=5, type=int,
+        help='Window size of skipgram model.'
+    )
 
-  parser.add_argument('--workers', default=1, type=int,
-                      help='Number of parallel processes.')
+    parser.add_argument('--workers', default=1, type=int,
+        help='Number of parallel processes.'
+    )
 
 
-  args = parser.parse_args()
-  numeric_level = getattr(logging, args.log.upper(), None)
-  logging.basicConfig(format=LOGFORMAT)
-  logger.setLevel(numeric_level)
+    args = parser.parse_args()
+    numeric_level = getattr(logging, args.log.upper(), None)
+    logging.basicConfig(format=LOGFORMAT)
+    logger.setLevel(numeric_level)
 
-  if args.debug:
-   sys.excepthook = debug
+    if args.debug:
+        sys.excepthook = debug
 
-  process(args)
+    process(args)
 
 if __name__ == "__main__":
-  sys.exit(main())
+    sys.exit(main())
