@@ -48,7 +48,9 @@ def debug(type_, value, tb):
 
 def process(args):
 
-    if args.format == "adjlist":
+    if args.format == "weighted_edgelist":
+        G = graph.load_weighted_edgelist(args.input)
+    elif args.format == "adjlist":
         G = graph.load_adjacencylist(args.input, undirected=args.undirected)
     elif args.format == "edgelist":
         G = graph.load_edgelist(args.input, undirected=args.undirected)
@@ -69,10 +71,19 @@ def process(args):
 
     if data_size < args.max_memory_data_size:
         print("Walking...")
-        walks = graph.build_deepwalk_corpus(
-            G, num_paths=args.number_walks,
-            path_length=args.walk_length, alpha=0, rand=random.Random(args.seed)
-        )
+
+        if args.format == "weighted_edgelist":
+            walks = graph.build_weighted_corpus(
+                G, paths_per_node=args.number_walks,
+                path_length=args.walk_length
+            )
+        else:
+            walks = graph.build_deepwalk_corpus(
+                G, num_paths=args.number_walks,
+                path_length=args.walk_length, alpha=0,
+                rand=random.Random(args.seed)
+            )
+
 
         print("Training...")
         model = Word2Vec(

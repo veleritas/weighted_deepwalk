@@ -19,6 +19,7 @@ from scipy.io import loadmat
 from scipy.sparse import issparse
 
 from tqdm import tqdm
+import numpy as np
 
 logger = logging.getLogger("deepwalk")
 
@@ -141,7 +142,34 @@ class Graph(defaultdict):
         return [str(node) for node in path]
 
 
-# TODO add build_walks in here
+    def weighted_random_walk(self, start_node, path_length):
+        G = self
+
+        path = [start_node]
+        while (len(path) < path_length) and G[path[-1]]:
+            cur_node = path[-1]
+            neighbour_ids, edge_weights = G[cur_node]
+
+            path.append(np.random.choice(neighbour_ids, p=edge_weights))
+
+        return [str(node_id) for node_id in path]
+
+#-------------------------------------------------------------------------------
+
+def build_weighted_corpus(G, paths_per_node, path_length, rand=random.Random(0)):
+    walks = []
+    nodes = list(G.nodes())
+
+    for i in range(paths_per_node):
+        rand.shuffle(nodes)
+
+        for start_node_id in tqdm(nodes, desc="Generating walks"):
+            walks.append(
+                G.weighted_random_walk(start_node_id, path_length)
+            )
+
+    return walks
+
 
 def build_deepwalk_corpus(G, num_paths, path_length, alpha=0,
                       rand=random.Random(0)):
