@@ -22,7 +22,8 @@ requirements = [
     'six>=1.7.3',
     'gensim>=1.0.0',
     'scipy>=0.15.0',
-    'psutil>=2.1.1'
+    'psutil>=2.1.1',
+    'urllib3==1.23'
 ]
 
 test_requirements = [
