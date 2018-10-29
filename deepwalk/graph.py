@@ -20,6 +20,7 @@ from scipy.sparse import issparse
 
 from tqdm import tqdm
 import numpy as np
+from collections import deque
 
 logger = logging.getLogger("deepwalk")
 
@@ -141,32 +142,42 @@ class Graph(defaultdict):
 
         return [str(node) for node in path]
 
-
-    def weighted_random_walk(self, start_node, path_length):
-        G = self
-
-        path = [start_node]
-        while (len(path) < path_length) and G[path[-1]]:
-            cur_node = path[-1]
-            neighbour_ids, edge_weights = G[cur_node]
-
-            path.append(np.random.choice(neighbour_ids, p=edge_weights))
-
-        return [str(node_id) for node_id in path]
-
 #-------------------------------------------------------------------------------
 
 def build_weighted_corpus(G, paths_per_node, path_length, rand=random.Random(0)):
     walks = []
     nodes = list(G.nodes())
 
+    # pre-generate next node choice
+    presize = 500
+    next_adj = {
+        source_id: deque(np.random.choice(neighbour_ids, p=edge_weights, size=presize))
+        for source_id, (neighbour_ids, edge_weights) in tqdm(G.items(), desc="Memoize neighbours")
+    }
+
+    def weighted_random_walk(start_node):
+        path = [start_node]
+
+        while (len(path) < path_length) and G[path[-1]]:
+            cur_node = path[-1]
+
+            if not next_adj[cur_node]:
+                cur_neigh, cur_weights = G[cur_node]
+
+                next_adj[cur_node] = deque(
+                    np.random.choice(cur_neigh, p=cur_weights, size=presize)
+                )
+
+            path.append(next_adj[cur_node].pop())
+
+        return [str(node_id) for node_id in path]
+
+
     for i in range(paths_per_node):
         rand.shuffle(nodes)
 
         for start_node_id in tqdm(nodes, desc="Generating walks"):
-            walks.append(
-                G.weighted_random_walk(start_node_id, path_length)
-            )
+            walks.append(weighted_random_walk(start_node_id))
 
     return walks
 
